@@ -1,7 +1,23 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Loan, Transaction, DashboardStats } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getApiKey = () => {
+  // 1. Try Vite env first (Standard for this platform + Vercel)
+  if (import.meta.env.VITE_GEMINI_API_KEY) {
+    return import.meta.env.VITE_GEMINI_API_KEY;
+  }
+  // 2. Try Node/Polyfill process next
+  try {
+    if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
+      return process.env.GEMINI_API_KEY;
+    }
+  } catch (e) {
+    // Ignore ReferenceError if process is not defined
+  }
+  return "";
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export async function analyzePortfolio(loans: Loan[], transactions: Transaction[], stats: DashboardStats): Promise<string> {
   const prompt = `

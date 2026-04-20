@@ -70,35 +70,27 @@ service cloud.firestore {
     // Domain Validators
     // ===============================================================
     function isValidLoan(data) {
-      return hasOnlyAllowedFields(['name', 'initialPrincipal', 'currentPrincipal', 'interestRate', 'startDate', 'userId', 'status', 'paymentFrequency']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 256 &&
+      return data.name is string && data.name.size() > 0 &&
              data.initialPrincipal is number && data.initialPrincipal > 0 &&
-             data.currentPrincipal is number && data.currentPrincipal >= 0 &&
-             data.interestRate is number && data.interestRate >= 0 &&
+             data.currentPrincipal is number &&
+             data.interestRate is number &&
              isValidDateString(data.startDate) &&
              data.userId is string && data.userId == request.auth.uid &&
-             data.status in ['active', 'closed'] &&
-             (!('paymentFrequency' in data) || data.paymentFrequency in ['weekly', 'monthly']);
+             data.status in ['active', 'closed'];
     }
 
     function isValidTransaction(data) {
-      return hasOnlyAllowedFields(['loanId', 'type', 'amount', 'date', 'userId', 'month', 'cycleKey']) &&
-             data.loanId is string &&
+      return data.loanId is string &&
              data.type in ['interest', 'principal'] &&
              data.amount is number && data.amount > 0 &&
              isValidDateString(data.date) &&
-             data.userId is string && data.userId == request.auth.uid &&
-             (!('month' in data) || (data.month is string && data.month.matches("^\\d{4}-\\d{2}$"))) && 
-             (!('cycleKey' in data) || (data.cycleKey is string && data.cycleKey.size() < 128));
+             data.userId is string && data.userId == request.auth.uid;
     }
 
     function isValidUser(data) {
-      return hasOnlyAllowedFields(['id', 'name', 'email', 'avatar', 'createdAt']) &&
-             data.id is string && data.id == request.auth.uid &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 256 &&
-             data.email is string &&
-             (!('avatar' in data) || (data.avatar is string && data.avatar.size() < 1024)) &&
-             (!('createdAt' in data) || isValidDateString(data.createdAt));
+      return data.id is string && data.id == request.auth.uid &&
+             data.name is string && data.name.size() > 0 &&
+             data.email is string;
     }
 
     // ===============================================================
@@ -112,20 +104,15 @@ service cloud.firestore {
     match /loans/{loanId} {
       allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
       allow create: if isAuthenticated() && isValidLoan(request.resource.data);
-      allow update: if isDocOwner() && isValidLoan(request.resource.data) &&
-                      request.resource.data.userId == resource.data.userId &&
-                      request.resource.data.initialPrincipal == resource.data.initialPrincipal;
-      allow delete: if isDocOwner();
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidLoan(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
     }
 
     match /transactions/{transactionId} {
       allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
       allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
-      allow update: if isDocOwner() && isValidTransaction(request.resource.data) &&
-                      request.resource.data.userId == resource.data.userId &&
-                      request.resource.data.loanId == resource.data.loanId &&
-                      request.resource.data.type == resource.data.type;
-      allow delete: if isDocOwner();
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidTransaction(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
     }
 
     match /users/{userId} {
