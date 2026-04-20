@@ -26,7 +26,7 @@ export default function SaaSAdmin({ currentUser }: SaaSAdminProps) {
 
   useEffect(() => {
     // 1. Fetch All Users
-    const unsubUsers = onSnapshot(query(collection(db, 'users'), orderBy('email')), (snapshot) => {
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       setAllUsers(snapshot.docs.map(d => d.data() as AppUser));
       setLoading(false);
     });
