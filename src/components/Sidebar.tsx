@@ -1,6 +1,5 @@
 import { Home, Landmark, Calculator, Receipt, User, LogOut, Plus, ChevronRight, TrendingUp, AlertCircle, History, DollarSign, ShieldCheck, X } from 'lucide-react';
 import type { AppUser } from '../types';
-import { getRoleColor } from '../lib/permissions';
 
 interface SidebarProps {
   activeTab: string;
@@ -19,7 +18,7 @@ export default function Sidebar({ activeTab, setActiveTab, appUser, onLogout, is
     { id: 'history', label: 'Audit Log', icon: History },
   ];
 
-  if (appUser?.role === 'ADMIN') {
+  if (appUser?.email === 'sagarmailstop@gmail.com') {
     menuItems.push({ id: 'saas-admin', label: 'SaaS Admin', icon: ShieldCheck });
   }
 
@@ -73,9 +72,6 @@ export default function Sidebar({ activeTab, setActiveTab, appUser, onLogout, is
              )}
           </div>
           <div className="flex flex-col min-w-0">
-            <div className={`text-[8px] font-bold uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border self-start mb-0.5 ${getRoleColor(appUser?.role || 'VIEWER')}`}>
-              {appUser?.role}
-            </div>
             <span className="text-sm font-serif italic text-natural-ink truncate">{appUser?.name.split(' ')[0]}</span>
           </div>
         </div>

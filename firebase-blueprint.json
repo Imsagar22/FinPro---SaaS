@@ -37,10 +37,9 @@
         "id": { "type": "string", "description": "Auth UID" },
         "name": { "type": "string", "description": "Display Name" },
         "email": { "type": "string", "description": "Email address" },
-        "role": { "type": "string", "enum": ["ADMIN", "MANAGER", "VIEWER"], "description": "System access level" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Registration Date" }
       },
-      "required": ["id", "name", "email", "role"]
+      "required": ["id", "name", "email"]
     }
   },
   "firestore": {

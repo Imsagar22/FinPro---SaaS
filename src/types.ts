@@ -1,10 +1,7 @@
-export type UserRole = 'ADMIN' | 'MANAGER' | 'VIEWER';
-
 export interface AppUser {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
   avatar?: string;
   createdAt?: string; // ISO String
 }

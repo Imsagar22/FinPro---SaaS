@@ -171,7 +171,6 @@ export default function SaaSAdmin({ currentUser }: SaaSAdminProps) {
               <tr className="bg-natural-sidebar/20 text-natural-muted text-[11px] font-bold uppercase tracking-wider border-b border-natural-border">
                 <th className="px-8 py-5">Tenant Identity</th>
                 <th className="px-8 py-5 text-center">Enrolled</th>
-                <th className="px-8 py-5">Access Level</th>
                 <th className="px-8 py-5 text-center">Assets / Risk</th>
                 <th className="px-8 py-5 text-right">Yield Performance</th>
                 <th className="px-8 py-5"></th>
@@ -201,11 +200,6 @@ export default function SaaSAdmin({ currentUser }: SaaSAdminProps) {
                     <div className="text-[9px] text-natural-muted uppercase font-bold tracking-tighter">
                       {tenant.createdAt ? new Date(tenant.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Bootstrapped'}
                     </div>
-                  </td>
-                  <td className="px-8 py-5">
-                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${tenant.role === 'ADMIN' ? 'bg-natural-accent/10 text-natural-accent border-natural-accent/20' : 'bg-natural-sidebar text-natural-muted border-natural-border'}`}>
-                        {tenant.role}
-                     </span>
                   </td>
                   <td className="px-8 py-5 text-center">
                     <div className="font-mono font-bold text-natural-ink text-sm">{tenant.loanCount}</div>

@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import type { Loan, Transaction, AppUser } from '../types';
-import { hasPermission } from '../lib/permissions';
 import { History, Search, Download, Filter, ArrowUpRight, ArrowDownRight, IndianRupee, ShieldAlert, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 
 import { isLoanOverdue, calculateLoanOverdueInfo } from '../lib/loanUtils';
@@ -15,7 +14,7 @@ interface AuditLogProps {
 export default function AuditLog({ transactions, loans, appUser, initialInArrearsOnly = false }: AuditLogProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoanId, setSelectedLoanId] = useState<string>('all');
-  const canExport = hasPermission(appUser, 'MANAGE_LOANS'); // Restricted action
+  const canExport = true;
   const [filterType, setFilterType] = useState<'all' | 'interest' | 'principal'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');

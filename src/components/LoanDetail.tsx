@@ -3,7 +3,6 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { Loan, Transaction, AppUser } from '../types';
-import { hasPermission } from '../lib/permissions';
 import { getCycleKey } from '../lib/loanUtils';
 import AssetIntelligence from './AssetIntelligence';
 
@@ -47,12 +46,12 @@ export default function LoanDetail({
   const [tempRate, setTempRate] = useState(loan.interestRate.toString());
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
 
-  // Permissions
-  const canUpdateRate = hasPermission(appUser, 'UPDATE_RATES');
-  const canCloseLoan = hasPermission(appUser, 'CLOSE_LOAN');
-  const canRecordPayments = hasPermission(appUser, 'RECORD_PAYMENTS');
-  const canDeleteRecords = hasPermission(appUser, 'DELETE_RECORDS');
-  const canDeleteLoan = hasPermission(appUser, 'DELETE_LOAN');
+  // Permissions (Simplified - Everyone can manage their own assets)
+  const canUpdateRate = true;
+  const canCloseLoan = true;
+  const canRecordPayments = true;
+  const canDeleteRecords = true;
+  const canDeleteLoan = true;
 
   // Delete Loan State
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);

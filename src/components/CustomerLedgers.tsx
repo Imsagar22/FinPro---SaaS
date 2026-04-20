@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Landmark, ArrowUpRight, ArrowDownRight, IndianRupee, PieChart, MoreHorizontal, ChevronRight, Calculator, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Loan, Transaction, AppUser } from '../types';
-import { hasPermission } from '../lib/permissions';
 
 interface CustomerLedgersProps {
   loans: Loan[];
@@ -14,7 +13,7 @@ interface CustomerLedgersProps {
 export default function CustomerLedgers({ loans, transactions, appUser, onLoanClick }: CustomerLedgersProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const canViewLedgers = hasPermission(appUser, 'MANAGE_LOANS'); // Restricted to Admin/Manager
+  const canViewLedgers = true;
 
   const customerAggregates = useMemo(() => {
     return loans.map((loan) => {

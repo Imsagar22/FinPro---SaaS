@@ -9,9 +9,8 @@ import LoanDetail from './components/LoanDetail';
 import CustomerLedgers from './components/CustomerLedgers';
 import AuditLog from './components/AuditLog';
 import SaaSAdmin from './components/SaaSAdmin';
-import type { Loan, Transaction, DashboardStats, AppUser, UserRole } from './types';
+import type { Loan, Transaction, DashboardStats, AppUser } from './types';
 import { TrendingUp, LogIn, Loader2, XCircle, ShieldCheck, Menu, X, AlertCircle } from 'lucide-react';
-import { hasPermission } from './lib/permissions';
 import { isLoanOverdue, calculateLoanOverdueInfo } from './lib/loanUtils';
 import { getDoc, setDoc } from 'firebase/firestore';
 
@@ -117,12 +116,10 @@ export default function App() {
             setAppUser(userDoc.data() as AppUser);
           } else {
             // Bootstrap first admin or default viewer
-            const isFirstAdmin = u.email === 'sagarmailstop@gmail.com';
             const newUser: AppUser = {
               id: u.uid,
               name: u.displayName || 'Anonymous User',
               email: u.email || '',
-              role: isFirstAdmin ? 'ADMIN' : 'VIEWER',
               avatar: u.photoURL || undefined,
               createdAt: new Date().toISOString()
             };
@@ -535,7 +532,7 @@ export default function App() {
                   initialInArrearsOnly={auditInitialFilter.inArrearsOnly}
                 />
               )}
-              {activeTab === 'saas-admin' && appUser?.role === 'ADMIN' && (
+              {activeTab === 'saas-admin' && (
                 <SaaSAdmin currentUser={appUser} />
               )}
             </>

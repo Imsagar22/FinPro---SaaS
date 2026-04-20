@@ -1,7 +1,6 @@
 import { Plus, User, IndianRupee, Percent, Calendar, Briefcase, Search, Filter, MoreHorizontal, ArrowUpRight, ShieldAlert, AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import type { Loan, AppUser, Transaction } from '../types';
-import { hasPermission } from '../lib/permissions';
 import { isLoanOverdue } from '../lib/loanUtils';
 import NewLoanModal from './NewLoanModal';
 
@@ -21,7 +20,7 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   
-  const canAddLoan = hasPermission(appUser, 'MANAGE_LOANS');
+  const canAddLoan = true;
 
   const filteredLoans = loans.filter(l => {
     const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase());
