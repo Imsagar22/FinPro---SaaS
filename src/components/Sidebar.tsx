@@ -73,6 +73,7 @@ export default function Sidebar({ activeTab, setActiveTab, appUser, onLogout, is
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-serif italic text-natural-ink truncate">{appUser?.name.split(' ')[0]}</span>
+            <span className="text-[9px] font-bold text-natural-muted/50 uppercase tracking-tighter">v2.1 • Full Access</span>
           </div>
         </div>
         <button 

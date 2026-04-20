@@ -1,26 +1,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Loan, Transaction, DashboardStats } from "../types";
 
-const getApiKey = () => {
-  // 1. Try Vite env first (Standard for this platform + Vercel)
-  const metaEnv = (import.meta as any).env;
-  if (metaEnv?.VITE_GEMINI_API_KEY) {
-    return metaEnv.VITE_GEMINI_API_KEY;
-  }
-  // 2. Try Node/Polyfill process next
-  try {
-    if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
-      return process.env.GEMINI_API_KEY;
-    }
-  } catch (e) {
-    // Ignore ReferenceError if process is not defined
-  }
-  return "";
-};
+// Use process.env.GEMINI_API_KEY as per coding guidelines for React (Vite)
+const apiKey = process.env.GEMINI_API_KEY || "";
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+if (!apiKey) {
+  console.warn("GEMINI_API_KEY is not defined. AI features will be unavailable.");
+}
+
+// Ensure an object with apiKey property is passed, and avoid crashing on empty/missing key
+const ai = new GoogleGenAI({ apiKey: apiKey || "DUMMY_KEY" });
 
 export async function analyzePortfolio(loans: Loan[], transactions: Transaction[], stats: DashboardStats): Promise<string> {
+  if (!apiKey || apiKey === "DUMMY_KEY") {
+    return "Intelligence activation failed: Missing API Key. Please configure GEMINI_API_KEY in the Secrets panel.";
+  }
   const prompt = `
     Analyze this loan portfolio and provide a concise, professional summary for a manager.
     Focus on:
@@ -57,6 +51,9 @@ export async function analyzePortfolio(loans: Loan[], transactions: Transaction[
 }
 
 export async function analyzeLoan(loan: Loan, transactions: Transaction[]): Promise<{ score: number, insight: string }> {
+  if (!apiKey || apiKey === "DUMMY_KEY") {
+    return { score: 0, insight: "Intelligence activation failed: Missing API Key." };
+  }
   const prompt = `
     Analyze the "Repayment Consistency" for this specific loan entity.
     Entity: ${loan.name}
@@ -104,6 +101,9 @@ export async function analyzeLoan(loan: Loan, transactions: Transaction[]): Prom
 }
 
 export async function askAI(query: string, context: { loans: Loan[], transactions: Transaction[] }): Promise<string> {
+  if (!apiKey || apiKey === "DUMMY_KEY") {
+    return "Intelligence activation failed: Missing API Key. Please provide your Gemini API key in the platform settings.";
+  }
   const prompt = `
     You are an expert financial analyst assistant. 
     Context:
