@@ -1,6 +1,6 @@
 import { Plus, User, IndianRupee, Percent, Calendar, Briefcase, Search, Filter, MoreHorizontal, ArrowUpRight, ShieldAlert, AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
-import type { Loan, AppUser, Transaction } from '../types';
+import { Loan, AppUser, Transaction, UserRole } from '../types';
 import { isLoanOverdue } from '../lib/loanUtils';
 import NewLoanModal from './NewLoanModal';
 
@@ -14,6 +14,7 @@ interface LoanListProps {
 
 export default function LoanList({ loans, transactions, appUser, onAddLoan, onLoanClick }: LoanListProps) {
   const [showModal, setShowModal] = useState(false);
+  const canAddLoan = appUser?.role === UserRole.SUPER_ADMIN || appUser?.role === UserRole.TENANT_ADMIN;
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'month' | 'year' | 'custom'>('all');
@@ -59,13 +60,15 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
           <h1 className="text-3xl font-serif text-natural-ink italic">Loan Portfolio</h1>
           <p className="text-natural-muted text-sm mt-1 italic">Manage and track individual asset performance.</p>
         </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-8 py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Application</span>
-          </button>
+          {canAddLoan && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-full md:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-8 py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Application</span>
+            </button>
+          )}
       </div>
 
       <div className="flex flex-col gap-4">

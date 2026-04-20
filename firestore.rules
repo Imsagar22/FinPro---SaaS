@@ -52,6 +52,10 @@ service cloud.firestore {
         (request.auth.token.email == "sagarmailstop@gmail.com" && request.auth.token.email_verified == true);
     }
 
+    function hasRole(role) {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
     function isDocOwner() {
       return isAuthenticated() && request.auth.uid == resource.data.userId;
     }
@@ -89,7 +93,10 @@ service cloud.firestore {
     function isValidUser(data) {
       return data.id is string && data.id == request.auth.uid &&
              data.name is string && data.name.size() > 0 &&
-             data.email is string;
+             data.email is string &&
+             data.role in ['SUPER_ADMIN', 'TENANT_ADMIN', 'STANDARD_USER'] &&
+             // Prevent non-admin users from escalating to SUPER_ADMIN
+             (isAdmin() || (data.role != 'SUPER_ADMIN'));
     }
 
     // ===============================================================
@@ -101,23 +108,25 @@ service cloud.firestore {
     }
 
     match /loans/{loanId} {
-      allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
-      allow create: if isAuthenticated() && isValidLoan(request.resource.data);
-      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidLoan(request.resource.data);
-      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+      allow read: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN'));
+      allow create: if isAuthenticated() && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN')) && isValidLoan(request.resource.data);
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN')) && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN')) && isValidLoan(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN')) && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN'));
     }
 
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (isDocOwner() || isAdmin());
-      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
-      allow update: if isAuthenticated() && (isDocOwner() || isAdmin()) && isValidTransaction(request.resource.data);
-      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin());
+      allow read: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN'));
+      allow create: if isAuthenticated() && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN')) && isValidTransaction(request.resource.data);
+      allow update: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN')) && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN')) && isValidTransaction(request.resource.data);
+      allow delete: if isAuthenticated() && (isDocOwner() || isAdmin() || hasRole('SUPER_ADMIN')) && (hasRole('TENANT_ADMIN') || hasRole('SUPER_ADMIN'));
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin() || hasRole('SUPER_ADMIN'));
       allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) || isAdmin() || hasRole('SUPER_ADMIN')) && isValidUser(request.resource.data) && 
+                      // Only Admins can change roles
+                      (request.resource.data.role == resource.data.role || isAdmin() || hasRole('SUPER_ADMIN'));
     }
   }
 }

@@ -1,7 +1,7 @@
 import { IndianRupee, TrendingUp, AlertCircle, Calendar, ChevronRight, EyeOff, Receipt, Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import type { Loan, Transaction, DashboardStats, AppUser } from '../types';
+import { Loan, Transaction, DashboardStats, AppUser, UserRole } from '../types';
 import NewLoanModal from './NewLoanModal';
 import AIAnalyst from './AIAnalyst';
 
@@ -17,6 +17,7 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, activeLoans, transactions, appUser, onLoanClick, onAddLoan, onStatsClick }: DashboardProps) {
   const [showModal, setShowModal] = useState(false);
+  const canAddLoan = appUser?.role === UserRole.SUPER_ADMIN || appUser?.role === UserRole.TENANT_ADMIN;
 
   const sortedLoans = [...activeLoans].sort((a, b) => 
     new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -58,20 +59,22 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="header-info">
           <h1 className="text-3xl font-serif text-natural-ink italic">Portfolio Overview</h1>
-          <p className="text-natural-muted text-sm mt-1 italic">Interest recalculation engine active &bull; Logic: Declining Balance (v2.1 Full Access)</p>
+          <p className="text-natural-muted text-sm mt-1 italic">Interest recalculation engine active &bull; Logic: Declining Balance (Role-Based Governance)</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <div className="flex items-center gap-2 px-4 py-2 bg-natural-sidebar border border-natural-border rounded-lg text-xs font-bold uppercase tracking-widest text-natural-accent w-full sm:w-auto justify-center">
              <Calendar className="w-4 h-4" />
              <span>{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-6 py-2.5 rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Application</span>
-          </button>
+          {canAddLoan && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-6 py-2.5 rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Application</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { ArrowLeft, Plus, History, Calculator, CheckCircle2, XCircle, Clock, Sav
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
-import { Loan, Transaction, AppUser } from '../types';
+import { Loan, Transaction, AppUser, UserRole } from '../types';
 import { getCycleKey } from '../lib/loanUtils';
 import AssetIntelligence from './AssetIntelligence';
 
@@ -35,6 +35,11 @@ export default function LoanDetail({
   const [repayAmount, setRepayAmount] = useState('');
   const [repayType, setRepayType] = useState<'interest' | 'principal'>('interest');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Role checks
+  const canManage = appUser?.role === UserRole.SUPER_ADMIN || appUser?.role === UserRole.TENANT_ADMIN;
+  const canTransact = appUser?.role === UserRole.SUPER_ADMIN || appUser?.role === UserRole.TENANT_ADMIN;
+  const isSuperAdmin = appUser?.role === UserRole.SUPER_ADMIN;
   
   // Edit State
   const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -223,12 +228,14 @@ export default function LoanDetail({
                   {loan.status}
                 </span>
               </div>
-              <button 
-                onClick={() => onToggleStatus(loan.id, loan.status)}
-                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition-all border ${loan.status === 'active' ? 'text-natural-error hover:bg-natural-error/5 border-natural-error/20' : 'text-natural-success hover:bg-natural-success/5 border-natural-success/20'}`}
-              >
-                {loan.status === 'active' ? 'Close Account' : 'Reactivate'}
-              </button>
+              {canManage && (
+                <button 
+                  onClick={() => onToggleStatus(loan.id, loan.status)}
+                  className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition-all border ${loan.status === 'active' ? 'text-natural-error hover:bg-natural-error/5 border-natural-error/20' : 'text-natural-success hover:bg-natural-success/5 border-natural-success/20'}`}
+                >
+                  {loan.status === 'active' ? 'Close Account' : 'Reactivate'}
+                </button>
+              )}
             </div>
             
             <div className="mt-8 space-y-4">
@@ -259,7 +266,7 @@ export default function LoanDetail({
                   <div className="flex items-baseline justify-between mt-1">
                     <span className="text-3xl font-mono font-bold text-natural-accent">₹{nextInterest.amount.toLocaleString('en-IN')}</span>
                     <div className="text-right">
-                      <div className="text-[10px] font-bold text-natural-muted uppercase tracking-widest leading-none">{nextInterest.monthKey} Cycle</div>
+                      <div className="text-[10px] font-bold text-natural-muted uppercase tracking-widest leading-none">{nextInterest.cycleKey} Cycle</div>
                       <div className="text-[11px] text-natural-muted italic mt-1 font-serif">Due {new Date(nextInterest.dueDate).toLocaleDateString()}</div>
                     </div>
                   </div>
@@ -299,12 +306,14 @@ export default function LoanDetail({
                   ) : (
                     <>
                       <span className="font-bold text-natural-accent font-mono">{loan.interestRate}% / {loan.paymentFrequency === 'weekly' ? 'week' : 'month'}</span>
-                      <button 
-                        onClick={() => setIsEditingRate(true)}
-                        className="text-natural-muted hover:text-natural-accent transition-colors p-1"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canManage && (
+                        <button 
+                          onClick={() => setIsEditingRate(true)}
+                          className="text-natural-muted hover:text-natural-accent transition-colors p-1"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -316,73 +325,76 @@ export default function LoanDetail({
             </div>
           </div>
 
-          <div className="p-8 bg-natural-accent text-white rounded-xl shadow-xl shadow-natural-accent/10">
-            <h3 className="text-lg font-serif italic mb-6 flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-natural-sidebar/50" />
-              Ledger Entry
-            </h3>
-            <form onSubmit={handleTransaction} className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Payment Amount (₹)</label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-sidebar/40" />
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={repayAmount}
-                      onChange={(e) => setRepayAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full bg-black/10 border border-white/10 rounded-lg py-4 pl-10 pr-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all font-mono"
-                      required
-                    />
+          {canTransact && (
+            <div className="p-8 bg-natural-accent text-white rounded-xl shadow-xl shadow-natural-accent/10">
+              <h3 className="text-lg font-serif italic mb-6 flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-natural-sidebar/50" />
+                Ledger Entry
+              </h3>
+              <form onSubmit={handleTransaction} className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Payment Amount (₹)</label>
+                    <div className="relative">
+                      <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-sidebar/40" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={repayAmount}
+                        onChange={(e) => setRepayAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-black/10 border border-white/10 rounded-lg py-4 pl-10 pr-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all font-mono"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex bg-black/10 rounded-lg p-1">
+                  <div className="flex bg-black/10 rounded-lg p-1">
+                    <button
+                      type="button"
+                      onClick={() => setRepayType('interest')}
+                      className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${repayType === 'interest' ? 'bg-white text-natural-accent shadow-sm' : 'text-white/50 hover:text-white'}`}
+                    >
+                      Interest
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRepayType('principal')}
+                      className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${repayType === 'principal' ? 'bg-white text-natural-accent shadow-sm' : 'text-white/50 hover:text-white'}`}
+                    >
+                      Principal
+                    </button>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setRepayType('interest')}
-                    className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${repayType === 'interest' ? 'bg-white text-natural-accent shadow-sm' : 'text-white/50 hover:text-white'}`}
+                    type="submit"
+                    disabled={isSubmitting || loan.status === 'closed'}
+                    className="w-full bg-white text-natural-accent font-bold py-4 rounded-lg hover:bg-natural-sidebar transition-colors shadow-lg disabled:opacity-50 uppercase text-xs tracking-widest"
                   >
-                    Interest
+                    {loan.status === 'closed' ? 'Account Closed' : (isSubmitting ? 'Posting...' : 'Commit Transaction')}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setRepayType('principal')}
-                    className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${repayType === 'principal' ? 'bg-white text-natural-accent shadow-sm' : 'text-white/50 hover:text-white'}`}
-                  >
-                    Principal
-                  </button>
-                </div>
+                  
+                  <p className="text-[11px] text-white/50 text-center italic">
+                    * {repayType === 'principal' ? 'Principal reduction triggers immediate interest ladder adjustment.' : (
+                      <>
+                        Interest settlement clears the oldest unpaid installment
+                        {nextInterest && (
+                          <span className="text-white font-bold ml-1">
+                            ({(() => {
+                              const [y, mOrW] = (nextInterest?.cycleKey || '').split('-');
+                              return mOrW.startsWith('W') ? `Week ${mOrW.substring(1)}, ${y}` : new Date(parseInt(y), parseInt(mOrW) - 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+                            })()})
+                          </span>
+                        )}
+                        .
+                      </>
+                    )}
+                  </p>
+                </form>
+            </div>
+          )}
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting || loan.status === 'closed'}
-                  className="w-full bg-white text-natural-accent font-bold py-4 rounded-lg hover:bg-natural-sidebar transition-colors shadow-lg disabled:opacity-50 uppercase text-xs tracking-widest"
-                >
-                  {loan.status === 'closed' ? 'Account Closed' : (isSubmitting ? 'Posting...' : 'Commit Transaction')}
-                </button>
-                
-                <p className="text-[11px] text-white/50 text-center italic">
-                  * {repayType === 'principal' ? 'Principal reduction triggers immediate interest ladder adjustment.' : (
-                    <>
-                      Interest settlement clears the oldest unpaid installment
-                      {nextInterest && (
-                        <span className="text-white font-bold ml-1">
-                          ({(() => {
-                            const [y, mOrW] = (nextInterest?.cycleKey || '').split('-');
-                            return mOrW.startsWith('W') ? `Week ${mOrW.substring(1)}, ${y}` : new Date(parseInt(y), parseInt(mOrW) - 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-                          })()})
-                        </span>
-                      )}
-                      .
-                    </>
-                  )}
-                </p>
-              </form>
-          </div>
-
-          <div className="p-6 bg-natural-error/5 border border-natural-error/20 rounded-xl space-y-4">
+          {canManage && (
+            <div className="p-6 bg-natural-error/5 border border-natural-error/20 rounded-xl space-y-4">
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-natural-error" />
                 <h4 className="text-[10px] font-bold text-natural-error uppercase tracking-widest">Dangerous Operations</h4>
@@ -421,6 +433,7 @@ export default function LoanDetail({
                 </div>
               )}
             </div>
+          )}
 
           <AssetIntelligence loan={loan} transactions={transactions} />
         </div>
@@ -660,7 +673,7 @@ export default function LoanDetail({
                             )}
                           </div>
 
-                          {editingTxId !== tx.id && deletingTxId !== tx.id && (
+                          {canTransact && editingTxId !== tx.id && deletingTxId !== tx.id && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => handleStartEdit(tx)} className="p-2 text-natural-muted hover:text-natural-accent hover:bg-natural-sidebar rounded-lg transition-all">
                                 <Edit2 className="w-3.5 h-3.5" />

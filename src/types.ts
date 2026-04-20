@@ -1,8 +1,15 @@
+export enum UserRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  TENANT_ADMIN = 'TENANT_ADMIN',
+  STANDARD_USER = 'STANDARD_USER'
+}
+
 export interface AppUser {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  role: UserRole;
   createdAt?: string; // ISO String
 }
 

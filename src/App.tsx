@@ -9,7 +9,7 @@ import LoanDetail from './components/LoanDetail';
 import CustomerLedgers from './components/CustomerLedgers';
 import AuditLog from './components/AuditLog';
 import SaaSAdmin from './components/SaaSAdmin';
-import type { Loan, Transaction, DashboardStats, AppUser } from './types';
+import { Loan, Transaction, DashboardStats, AppUser, UserRole } from './types';
 import { TrendingUp, LogIn, Loader2, XCircle, ShieldCheck, Menu, X, AlertCircle } from 'lucide-react';
 import { isLoanOverdue, calculateLoanOverdueInfo } from './lib/loanUtils';
 import { getDoc, setDoc } from 'firebase/firestore';
@@ -115,12 +115,15 @@ export default function App() {
           if (userDoc.exists()) {
             setAppUser(userDoc.data() as AppUser);
           } else {
-            // Bootstrap first admin or default viewer
+            // Bootstrap roles based on internal whitelist
+            const role = u.email === 'sagarmailstop@gmail.com' ? UserRole.SUPER_ADMIN : UserRole.TENANT_ADMIN;
+
             const newUser: AppUser = {
               id: u.uid,
               name: u.displayName || 'Anonymous User',
               email: u.email || '',
               avatar: u.photoURL || undefined,
+              role,
               createdAt: new Date().toISOString()
             };
             await setDoc(userRef, newUser);
@@ -532,7 +535,7 @@ export default function App() {
                   initialInArrearsOnly={auditInitialFilter.inArrearsOnly}
                 />
               )}
-              {activeTab === 'saas-admin' && (
+              {activeTab === 'saas-admin' && appUser?.role === UserRole.SUPER_ADMIN && (
                 <SaaSAdmin currentUser={appUser} />
               )}
             </>
