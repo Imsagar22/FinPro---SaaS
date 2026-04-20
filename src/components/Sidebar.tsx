@@ -1,5 +1,5 @@
 import { Home, Landmark, Calculator, Receipt, User, LogOut, Plus, ChevronRight, TrendingUp, AlertCircle, History, DollarSign, ShieldCheck, X } from 'lucide-react';
-import { AppUser, UserRole } from '../types';
+import { AppUser } from '../types';
 
 interface SidebarProps {
   activeTab: string;
@@ -18,7 +18,7 @@ export default function Sidebar({ activeTab, setActiveTab, appUser, onLogout, is
     { id: 'history', label: 'Audit Log', icon: History },
   ];
 
-  if (appUser?.role === UserRole.SUPER_ADMIN) {
+  if (appUser?.email === 'sagarmailstop@gmail.com') {
     menuItems.push({ id: 'saas-admin', label: 'SaaS Admin', icon: ShieldCheck });
   }
 
@@ -73,11 +73,7 @@ export default function Sidebar({ activeTab, setActiveTab, appUser, onLogout, is
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-serif italic text-natural-ink truncate">{appUser?.name.split(' ')[0]}</span>
-            <span className="text-[9px] font-bold text-natural-muted/50 uppercase tracking-tighter">
-              {appUser?.role === UserRole.SUPER_ADMIN && 'Super Admin'}
-              {appUser?.role === UserRole.TENANT_ADMIN && 'Tenant Admin'}
-              {appUser?.role === UserRole.STANDARD_USER && 'Standard User'}
-            </span>
+            <span className="text-[9px] font-bold text-natural-muted/50 uppercase tracking-tighter">Verified Session</span>
           </div>
         </div>
         <button 
