@@ -3,8 +3,9 @@ import type { Loan, Transaction, DashboardStats } from "../types";
 
 const getApiKey = () => {
   // 1. Try Vite env first (Standard for this platform + Vercel)
-  if (import.meta.env.VITE_GEMINI_API_KEY) {
-    return import.meta.env.VITE_GEMINI_API_KEY;
+  const metaEnv = (import.meta as any).env;
+  if (metaEnv?.VITE_GEMINI_API_KEY) {
+    return metaEnv.VITE_GEMINI_API_KEY;
   }
   // 2. Try Node/Polyfill process next
   try {

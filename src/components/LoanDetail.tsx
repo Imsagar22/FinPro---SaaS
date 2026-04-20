@@ -46,17 +46,6 @@ export default function LoanDetail({
   const [tempRate, setTempRate] = useState(loan.interestRate.toString());
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
 
-  // Permissions (Simplified - Everyone can manage their own assets)
-  const canUpdateRate = true;
-  const canCloseLoan = true;
-  const canRecordPayments = true;
-  const canDeleteRecords = true;
-  const canDeleteLoan = true;
-
-  // Delete Loan State
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [isDeletingLoan, setIsDeletingLoan] = useState(false);
-
   // Transaction Confirmation State
   const [isConfirmingTransaction, setIsConfirmingTransaction] = useState(false);
 
@@ -64,6 +53,10 @@ export default function LoanDetail({
   const [historyTypeFilter, setHistoryTypeFilter] = useState<'all' | 'interest' | 'principal'>('all');
   const [historyStartDate, setHistoryStartDate] = useState('');
   const [historyEndDate, setHistoryEndDate] = useState('');
+
+  // Delete Loan State
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeletingLoan, setIsDeletingLoan] = useState(false);
 
   const ladder = useMemo(() => {
     const rows = [];
@@ -230,14 +223,12 @@ export default function LoanDetail({
                   {loan.status}
                 </span>
               </div>
-              {canCloseLoan && (
-                <button 
-                  onClick={() => onToggleStatus(loan.id, loan.status)}
-                  className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition-all border ${loan.status === 'active' ? 'text-natural-error hover:bg-natural-error/5 border-natural-error/20' : 'text-natural-success hover:bg-natural-success/5 border-natural-success/20'}`}
-                >
-                  {loan.status === 'active' ? 'Close Account' : 'Reactivate'}
-                </button>
-              )}
+              <button 
+                onClick={() => onToggleStatus(loan.id, loan.status)}
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition-all border ${loan.status === 'active' ? 'text-natural-error hover:bg-natural-error/5 border-natural-error/20' : 'text-natural-success hover:bg-natural-success/5 border-natural-success/20'}`}
+              >
+                {loan.status === 'active' ? 'Close Account' : 'Reactivate'}
+              </button>
             </div>
             
             <div className="mt-8 space-y-4">
@@ -308,14 +299,12 @@ export default function LoanDetail({
                   ) : (
                     <>
                       <span className="font-bold text-natural-accent font-mono">{loan.interestRate}% / {loan.paymentFrequency === 'weekly' ? 'week' : 'month'}</span>
-                      {canUpdateRate && (
-                        <button 
-                          onClick={() => setIsEditingRate(true)}
-                          className="text-natural-muted hover:text-natural-accent transition-colors p-1"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => setIsEditingRate(true)}
+                        className="text-natural-muted hover:text-natural-accent transition-colors p-1"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
                     </>
                   )}
                 </div>
@@ -332,8 +321,7 @@ export default function LoanDetail({
               <Wallet className="w-5 h-5 text-natural-sidebar/50" />
               Ledger Entry
             </h3>
-            {canRecordPayments ? (
-              <form onSubmit={handleTransaction} className="space-y-6">
+            <form onSubmit={handleTransaction} className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Payment Amount (₹)</label>
                   <div className="relative">
@@ -392,17 +380,9 @@ export default function LoanDetail({
                   )}
                 </p>
               </form>
-            ) : (
-              <div className="p-8 border border-white/20 rounded-xl bg-black/10 text-center space-y-3">
-                <ShieldAlert className="w-8 h-8 mx-auto text-white/30" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Restricted Access</p>
-                <p className="text-xs text-white/70 italic font-serif">You do not have authorization to post transactions to this ledger.</p>
-              </div>
-            )}
           </div>
 
-          {canDeleteLoan && (
-            <div className="p-6 bg-natural-error/5 border border-natural-error/20 rounded-xl space-y-4">
+          <div className="p-6 bg-natural-error/5 border border-natural-error/20 rounded-xl space-y-4">
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-natural-error" />
                 <h4 className="text-[10px] font-bold text-natural-error uppercase tracking-widest">Dangerous Operations</h4>
@@ -441,7 +421,6 @@ export default function LoanDetail({
                 </div>
               )}
             </div>
-          )}
 
           <AssetIntelligence loan={loan} transactions={transactions} />
         </div>
@@ -681,7 +660,7 @@ export default function LoanDetail({
                             )}
                           </div>
 
-                          {canDeleteRecords && editingTxId !== tx.id && deletingTxId !== tx.id && (
+                          {editingTxId !== tx.id && deletingTxId !== tx.id && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => handleStartEdit(tx)} className="p-2 text-natural-muted hover:text-natural-accent hover:bg-natural-sidebar rounded-lg transition-all">
                                 <Edit2 className="w-3.5 h-3.5" />

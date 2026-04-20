@@ -20,8 +20,6 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   
-  const canAddLoan = true;
-
   const filteredLoans = loans.filter(l => {
     const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || l.status === statusFilter;
@@ -61,7 +59,6 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
           <h1 className="text-3xl font-serif text-natural-ink italic">Loan Portfolio</h1>
           <p className="text-natural-muted text-sm mt-1 italic">Manage and track individual asset performance.</p>
         </div>
-        {canAddLoan && (
           <button
             onClick={() => setShowModal(true)}
             className="w-full md:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-8 py-4 rounded-xl font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
@@ -69,7 +66,6 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
             <Plus className="w-4 h-4" />
             <span>New Application</span>
           </button>
-        )}
       </div>
 
       <div className="flex flex-col gap-4">

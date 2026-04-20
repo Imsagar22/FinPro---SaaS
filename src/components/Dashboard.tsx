@@ -17,7 +17,6 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, activeLoans, transactions, appUser, onLoanClick, onAddLoan, onStatsClick }: DashboardProps) {
   const [showModal, setShowModal] = useState(false);
-  const isPrivileged = true; 
 
   const sortedLoans = [...activeLoans].sort((a, b) => 
     new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -26,14 +25,14 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
   const cards = [
     { 
       label: 'Total Capital Out', 
-      value: !isPrivileged ? 'RESTRICTED' : stats.totalCapitalOut, 
+      value: stats.totalCapitalOut, 
       icon: IndianRupee, 
       color: 'natural-success', 
       trend: `${activeLoans.length} Active Accounts` 
     },
     { 
       label: 'Total Interest Earned', 
-      value: !isPrivileged ? 'RESTRICTED' : stats.totalInterestEarned, 
+      value: stats.totalInterestEarned, 
       icon: TrendingUp, 
       color: 'natural-accent', 
       trend: 'Lifetime Profit' 
@@ -47,7 +46,7 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
     },
     { 
       label: 'Pending Interest', 
-      value: !isPrivileged ? 'RESTRICTED' : stats.totalPendingInterest, 
+      value: stats.totalPendingInterest, 
       icon: Receipt, 
       color: stats.totalPendingInterest > 0 ? 'natural-accent' : 'natural-muted', 
       trend: 'Receivable Dues' 
@@ -66,15 +65,13 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
              <Calendar className="w-4 h-4" />
              <span>{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
           </div>
-          {isPrivileged && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-6 py-2.5 rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Application</span>
-            </button>
-          )}
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-natural-accent text-white px-6 py-2.5 rounded-lg font-bold hover:opacity-90 transition-all shadow-lg shadow-natural-accent/10 uppercase text-[10px] tracking-widest"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Application</span>
+          </button>
         </div>
       </div>
 
@@ -103,14 +100,7 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
                 <p className="text-[10px] font-bold uppercase tracking-widest text-natural-muted">{card.label}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-2xl font-serif text-natural-accent">
-                    {card.value === 'RESTRICTED' ? (
-                      <span className="flex items-center gap-2 text-natural-muted/40 italic text-base font-sans">
-                        <EyeOff className="w-4 h-4" />
-                        Confidential
-                      </span>
-                    ) : (
-                      card.label === 'Overdue Alerts' ? String(card.value).padStart(2, '0') : `₹${(card.value as number).toLocaleString('en-IN')}`
-                    )}
+                    {card.label === 'Overdue Alerts' ? String(card.value).padStart(2, '0') : `₹${(card.value as number).toLocaleString('en-IN')}`}
                   </p>
                 </div>
               </div>
