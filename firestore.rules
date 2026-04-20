@@ -1,0 +1,137 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: loans
+// Document ID: auto-generated
+// Fields:
+//   - name: string (required) - Customer name
+//   - initialPrincipal: number (required) - Original amount
+//   - currentPrincipal: number (required) - Outstanding balance
+//   - interestRate: number (required) - Monthly %
+//   - startDate: string (required, ISO 8601) - Start date
+//   - userId: string (required) - Owner UID
+//   - status: string (required, enum: active, closed)
+//
+// Collection: transactions
+// Document ID: auto-generated
+// Fields:
+//   - loanId: string (required) - Ref to loan
+//   - type: string (required, enum: interest, principal)
+//   - amount: number (required, positive)
+//   - date: string (required, ISO 8601) - Transaction date
+//   - userId: string (required) - Owner UID
+//   - month: string (optional) - Target month (YYYY-MM)
+// Collection: users
+// Document ID: user UID
+// Fields:
+//   - id: string (required) - UID
+//   - name: string (required) - Display name
+//   - email: string (required) - Email address
+//   - role: string (required, enum: ADMIN, MANAGER, VIEWER)
+//   - avatar: string (optional) - Photo URL
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN') ||
+          (request.auth.token.email == "sagarmailstop@gmail.com" && request.auth.token.email_verified == true)
+        );
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidLoan(data) {
+      return hasOnlyAllowedFields(['name', 'initialPrincipal', 'currentPrincipal', 'interestRate', 'startDate', 'userId', 'status']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.initialPrincipal is number && data.initialPrincipal > 0 &&
+             data.currentPrincipal is number && data.currentPrincipal >= 0 &&
+             data.interestRate is number && data.interestRate >= 0 &&
+             isValidDateString(data.startDate) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.status in ['active', 'closed'];
+    }
+
+    function isValidTransaction(data) {
+      return hasOnlyAllowedFields(['loanId', 'type', 'amount', 'date', 'userId', 'month']) &&
+             data.loanId is string &&
+             data.type in ['interest', 'principal'] &&
+             data.amount is number && data.amount > 0 &&
+             isValidDateString(data.date) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             (!('month' in data) || (data.month is string && data.month.matches("^\\d{4}-\\d{2}$")));
+    }
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['id', 'name', 'email', 'role', 'avatar']) &&
+             data.id is string && data.id == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.role in ['ADMIN', 'MANAGER', 'VIEWER'] &&
+             (!('avatar' in data) || (data.avatar is string && data.avatar.matches("^https?://.*")));
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /loans/{loanId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidLoan(request.resource.data);
+      allow update: if isDocOwner() && isValidLoan(request.resource.data) &&
+                      request.resource.data.userId == resource.data.userId &&
+                      request.resource.data.initialPrincipal == resource.data.initialPrincipal;
+      allow delete: if isDocOwner();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isDocOwner() && isValidTransaction(request.resource.data) &&
+                      request.resource.data.userId == resource.data.userId &&
+                      request.resource.data.loanId == resource.data.loanId &&
+                      request.resource.data.type == resource.data.type;
+      allow delete: if isDocOwner();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == 'VIEWER' || 
+                       (request.resource.data.role == 'ADMIN' && request.auth.token.email == "sagarmailstop@gmail.com"));
+      allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role);
+    }
+  }
+}

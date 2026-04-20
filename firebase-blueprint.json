@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "Loan": {
+      "title": "Loan",
+      "description": "Represents a loan given to a customer.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Customer name" },
+        "initialPrincipal": { "type": "number", "description": "Original loan amount" },
+        "currentPrincipal": { "type": "number", "description": "Remaining debt" },
+        "interestRate": { "type": "number", "description": "Monthly interest percentage" },
+        "startDate": { "type": "string", "format": "date-time", "description": "Loan disbursement date" },
+        "userId": { "type": "string", "description": "Owner of the record" },
+        "status": { "type": "string", "enum": ["active", "closed"], "description": "Loan status" }
+      },
+      "required": ["name", "initialPrincipal", "currentPrincipal", "interestRate", "startDate", "userId", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A payment or adjustment record for a loan.",
+      "type": "object",
+      "properties": {
+        "loanId": { "type": "string", "description": "Reference to the loan" },
+        "type": { "type": "string", "enum": ["interest", "principal"], "description": "Payment type" },
+        "amount": { "type": "number", "description": "Value of the transaction" },
+        "date": { "type": "string", "format": "date-time", "description": "When it happened" },
+        "userId": { "type": "string", "description": "Owner of the record" },
+        "month": { "type": "string", "description": "Target month if interest (YYYY-MM)" }
+      },
+      "required": ["loanId", "type", "amount", "date", "userId"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Registered SaaS tenant profile.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Auth UID" },
+        "name": { "type": "string", "description": "Display Name" },
+        "email": { "type": "string", "description": "Email address" },
+        "role": { "type": "string", "enum": ["ADMIN", "MANAGER", "VIEWER"], "description": "System access level" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Registration Date" }
+      },
+      "required": ["id", "name", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "SaaS Tenant registry"
+    },
+    "/loans/{loanId}": {
+      "schema": "Loan",
+      "description": "Collection of loans"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Ledger of all transactions"
+    }
+  }
+}
