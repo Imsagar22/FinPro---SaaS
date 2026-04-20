@@ -13,8 +13,6 @@ interface CustomerLedgersProps {
 export default function CustomerLedgers({ loans, transactions, appUser, onLoanClick }: CustomerLedgersProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const canViewLedgers = true;
-
   const customerAggregates = useMemo(() => {
     return loans.map((loan) => {
       const loanTx = transactions.filter(tx => tx.loanId === loan.id);
@@ -40,40 +38,26 @@ export default function CustomerLedgers({ loans, transactions, appUser, onLoanCl
           <h1 className="text-3xl font-serif text-natural-ink">Customer Account Ledgers</h1>
           <p className="text-natural-muted text-sm mt-1 italic">Consolidated reporting on all client asset accounts.</p>
         </div>
-        {!canViewLedgers ? null : (
-          <div className="flex items-center gap-3 bg-white border border-natural-border rounded-xl px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-natural-accent/10 transition-all w-full md:min-w-[300px] md:w-auto">
-            <IndianRupee className="w-4 h-4 text-natural-muted shrink-0" />
-            <input 
-              type="text"
-              placeholder="Search account name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-transparent text-sm focus:outline-none text-natural-ink placeholder:italic placeholder:text-natural-muted/50"
-            />
-          </div>
-        )}
+        <div className="flex items-center gap-3 bg-white border border-natural-border rounded-xl px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-natural-accent/10 transition-all w-full md:min-w-[300px] md:w-auto">
+          <IndianRupee className="w-4 h-4 text-natural-muted shrink-0" />
+          <input 
+            type="text"
+            placeholder="Search account name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-transparent text-sm focus:outline-none text-natural-ink placeholder:italic placeholder:text-natural-muted/50"
+          />
+        </div>
       </div>
 
-      {!canViewLedgers ? (
-        <div className="h-auto md:h-[400px] flex items-center justify-center bg-white border border-natural-border rounded-2xl shadow-sm p-10">
-           <div className="max-w-xs text-center space-y-4">
-              <div className="w-16 h-16 bg-natural-error/10 text-natural-error rounded-full flex items-center justify-center mx-auto border border-natural-error/20">
-                <ShieldAlert className="w-8 h-8" />
-              </div>
-              <h2 className="text-xl font-serif text-natural-ink italic">Access Restricted</h2>
-              <p className="text-sm text-natural-muted font-bold uppercase tracking-widest bg-natural-sidebar py-2 rounded">Clearance Level Insufficient</p>
-              <p className="text-xs text-natural-muted italic leading-relaxed font-serif">You do not have the required administrative credentials to view high-priority customer ledgers.</p>
-           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {customerAggregates.length === 0 ? (
-            <div className="py-24 text-center bg-white border border-natural-border rounded-2xl">
-               <Calculator className="w-12 h-12 text-natural-border mx-auto mb-4" />
-               <p className="text-natural-muted italic font-serif">Asset repository shows no active client ledgers.</p>
-            </div>
-          ) : customerAggregates.map((customer, idx) => (
-            <motion.div
+      <div className="grid grid-cols-1 gap-6">
+        {customerAggregates.length === 0 ? (
+          <div className="py-24 text-center bg-white border border-natural-border rounded-2xl">
+              <Calculator className="w-12 h-12 text-natural-border mx-auto mb-4" />
+              <p className="text-natural-muted italic font-serif">Asset repository shows no active client ledgers.</p>
+          </div>
+        ) : customerAggregates.map((customer, idx) => (
+          <motion.div
               key={customer.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -152,7 +136,6 @@ export default function CustomerLedgers({ loans, transactions, appUser, onLoanCl
             </motion.div>
           ))}
         </div>
-      )}
     </div>
   );
 }

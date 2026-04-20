@@ -28,7 +28,6 @@
 //   - id: string (required) - UID
 //   - name: string (required) - Display name
 //   - email: string (required) - Email address
-//   - role: string (required, enum: ADMIN, MANAGER, VIEWER)
 //   - avatar: string (optional) - Photo URL
 //
 // ===============================================================
