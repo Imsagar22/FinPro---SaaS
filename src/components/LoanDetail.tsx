@@ -1,4 +1,4 @@
-import { ArrowLeft, Plus, History, Calculator, CheckCircle2, XCircle, Clock, Save, IndianRupee, Wallet, AlertCircle, Receipt, Edit2, Trash2, Check, X, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Plus, History, Calculator, CheckCircle2, XCircle, Clock, Save, IndianRupee, Wallet, AlertCircle, Receipt, Edit2, Trash2, Check, X, ShieldAlert, Loader2 } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -16,6 +16,7 @@ interface LoanDetailProps {
   onDeleteTransaction: (tx: Transaction) => Promise<void>;
   onToggleStatus: (loanId: string, currentStatus: 'active' | 'closed') => Promise<void>;
   onUpdateInterestRate: (loanId: string, newRate: number) => Promise<void>;
+  onUpdateName: (loanId: string, newName: string) => Promise<void>;
   onDeleteLoan: (loanId: string) => Promise<void>;
 }
 
@@ -29,6 +30,7 @@ export default function LoanDetail({
   onDeleteTransaction,
   onToggleStatus,
   onUpdateInterestRate,
+  onUpdateName,
   onDeleteLoan
 }: LoanDetailProps) {
   const [activeTab, setActiveTab] = useState<'ladder' | 'history'>('ladder');
@@ -44,6 +46,11 @@ export default function LoanDetail({
   const [isEditingRate, setIsEditingRate] = useState(false);
   const [tempRate, setTempRate] = useState(loan.interestRate.toString());
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
+
+  // Name Edit State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState(loan.name);
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
 
   // Transaction Confirmation State
   const [isConfirmingTransaction, setIsConfirmingTransaction] = useState(false);
@@ -146,6 +153,17 @@ export default function LoanDetail({
     }
   };
 
+  const handleNameUpdate = async () => {
+    if (!tempName.trim()) return;
+    setIsUpdatingName(true);
+    try {
+      await onUpdateName(loan.id, tempName.trim());
+      setIsEditingName(false);
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
+
   const handleTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     if (!repayAmount || isSubmitting) return;
@@ -213,7 +231,48 @@ export default function LoanDetail({
         {/* Left Column: Loan Summary & Actions */}
         <div className="lg:col-span-1 space-y-6">
           <div className="p-8 bg-white border border-natural-border rounded-xl shadow-sm">
-            <h2 className="text-2xl font-serif text-natural-ink italic">{loan.name}</h2>
+            <div className="flex items-center justify-between gap-2 group">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 w-full animate-in fade-in slide-in-from-left-2 duration-300">
+                  <input
+                    type="text"
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    className="flex-1 bg-natural-sidebar border border-natural-border rounded px-2 py-1 text-lg font-serif italic text-natural-ink focus:outline-none focus:ring-1 focus:ring-natural-accent"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleNameUpdate();
+                      if (e.key === 'Escape') { setIsEditingName(false); setTempName(loan.name); }
+                    }}
+                  />
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={handleNameUpdate}
+                      disabled={isUpdatingName}
+                      className="text-natural-success hover:bg-natural-success/10 p-1 rounded transition-colors disabled:opacity-50"
+                    >
+                      {isUpdatingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    </button>
+                    <button 
+                      onClick={() => { setIsEditingName(false); setTempName(loan.name); }}
+                      className="text-natural-error hover:bg-natural-error/10 p-1 rounded transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-serif text-natural-ink italic truncate">{loan.name}</h2>
+                  <button 
+                    onClick={() => setIsEditingName(true)}
+                    className="p-1.5 text-natural-muted hover:text-natural-accent transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
             <p className="text-xs font-bold text-natural-muted uppercase tracking-widest mt-2">Current Debt Position</p>
             <div className="mt-4 flex items-baseline justify-between gap-2">
               <div className="flex items-baseline gap-2">

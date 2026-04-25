@@ -355,6 +355,22 @@ export default function App() {
     }
   };
 
+  const updateLoanName = async (loanId: string, newName: string) => {
+    if (!user) return;
+    const path = `loans/${loanId}`;
+    try {
+      const loanRef = doc(db, 'loans', loanId);
+      await updateDoc(loanRef, { name: newName });
+      
+      // Update local state if selected
+      if (selectedLoan?.id === loanId) {
+        setSelectedLoan(prev => prev ? ({ ...prev, name: newName }) : null);
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+    }
+  };
+
   const deleteLoan = async (loanId: string) => {
     if (!user) return;
     const path = `loans/${loanId}`;
@@ -484,6 +500,7 @@ export default function App() {
               onDeleteTransaction={deleteTransaction}
               onToggleStatus={toggleLoanStatus}
               onUpdateInterestRate={updateInterestRate}
+              onUpdateName={updateLoanName}
               onDeleteLoan={deleteLoan}
             />
           ) : (
