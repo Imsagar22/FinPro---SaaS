@@ -11,7 +11,7 @@ import AuditLog from './components/AuditLog';
 import SaaSAdmin from './components/SaaSAdmin';
 import type { Loan, Transaction, DashboardStats, AppUser } from './types';
 import { TrendingUp, LogIn, Loader2, XCircle, ShieldCheck, Menu, X, AlertCircle } from 'lucide-react';
-import { isLoanOverdue, calculateLoanOverdueInfo } from './lib/loanUtils';
+import { isLoanOverdue, calculateLoanOverdueInfo, getExpectedPaymentsForMonth } from './lib/loanUtils';
 import { getDoc, setDoc } from 'firebase/firestore';
 
 // 0. Error Boundary
@@ -172,14 +172,42 @@ export default function App() {
     // Calculate overdue alerts for active loans only
     let overdueCount = 0;
     let totalPendingInterest = 0;
+    let expectedPaymentsThisMonth = 0;
+    const expectedPaymentsDetails: { loanId: string; loanName: string; dueDate: string; amount: number; cycleKey: string; isPaid: boolean }[] = [];
     
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
     loans.forEach(loan => {
       const info = calculateLoanOverdueInfo(loan, transactions);
       overdueCount += info.overdueCount;
       totalPendingInterest += info.pendingInterest;
+
+      // Calculate expected payments for the current month
+      const monthInstallments = getExpectedPaymentsForMonth(loan, currentYear, currentMonth);
+      expectedPaymentsThisMonth += monthInstallments.length;
+      
+      monthInstallments.forEach(inst => {
+        const isPaid = transactions.some(
+          t => t.loanId === loan.id && t.type === 'interest' && t.cycleKey === inst.cycleKey
+        );
+
+        expectedPaymentsDetails.push({
+          loanId: loan.id,
+          loanName: loan.name,
+          dueDate: inst.dueDate.toISOString(),
+          amount: loan.currentPrincipal * (loan.interestRate / 100),
+          cycleKey: inst.cycleKey,
+          isPaid
+        });
+      });
     });
 
-    return { totalCapitalOut, totalInterestEarned, overdueCount, totalPendingInterest };
+    // Sort by date
+    expectedPaymentsDetails.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    return { totalCapitalOut, totalInterestEarned, overdueCount, totalPendingInterest, expectedPaymentsThisMonth, expectedPaymentsDetails };
   }, [loans, transactions]);
 
   // 4. Actions

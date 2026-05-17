@@ -1,6 +1,6 @@
-import { IndianRupee, TrendingUp, AlertCircle, Calendar, ChevronRight, EyeOff, Receipt, Plus } from 'lucide-react';
+import { IndianRupee, TrendingUp, AlertCircle, Calendar, ChevronRight, EyeOff, Receipt, Plus, X, Clock, Check } from 'lucide-react';
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Loan, Transaction, DashboardStats, AppUser } from '../types';
 import NewLoanModal from './NewLoanModal';
 import AIAnalyst from './AIAnalyst';
@@ -17,6 +17,7 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, activeLoans, transactions, appUser, onLoanClick, onAddLoan, onStatsClick }: DashboardProps) {
   const [showModal, setShowModal] = useState(false);
+  const [showPaymentsModal, setShowPaymentsModal] = useState(false);
 
   const sortedLoans = [...activeLoans].sort((a, b) => 
     new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
@@ -51,7 +52,22 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
       color: stats.totalPendingInterest > 0 ? 'natural-accent' : 'natural-muted', 
       trend: 'Receivable Dues' 
     },
+    { 
+      label: 'Expected Payments', 
+      value: stats.expectedPaymentsThisMonth, 
+      icon: Calendar, 
+      color: 'natural-accent', 
+      trend: 'Due this Month' 
+    },
   ];
+
+  const handleCardClick = (label: string) => {
+    if (label === 'Expected Payments') {
+      setShowPaymentsModal(true);
+    } else if (onStatsClick) {
+      onStatsClick(label);
+    }
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -75,23 +91,22 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {cards.map((card, idx) => (
           <motion.div
             key={card.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={onStatsClick ? { scale: 1.02, y: -4 } : {}}
-            whileTap={onStatsClick ? { scale: 0.98 } : {}}
+            whileHover={{ scale: 1.02, y: -4 }}
+            whileTap={{ scale: 0.98 }}
             transition={{ delay: idx * 0.1 }}
-            onClick={() => onStatsClick?.(card.label)}
-            className={`p-6 bg-white border rounded-xl shadow-sm transition-all relative group/card ${onStatsClick ? 'cursor-pointer hover:shadow-lg hover:border-natural-accent/30' : ''} ${card.label === 'Overdue Alerts' && stats.overdueCount > 0 ? 'border-natural-error/30 bg-natural-error/[0.01]' : 'border-natural-border'}`}
+            onClick={() => handleCardClick(card.label)}
+            className={`p-6 bg-white border rounded-xl shadow-sm transition-all relative group/card cursor-pointer hover:shadow-lg hover:border-natural-accent/30 ${card.label === 'Overdue Alerts' && stats.overdueCount > 0 ? 'border-natural-error/30 bg-natural-error/[0.01]' : 'border-natural-border'}`}
           >
-            {onStatsClick && (
-              <div className="absolute top-4 right-4 opacity-0 group-hover/card:opacity-100 transition-opacity">
-                <ChevronRight className={`w-3 h-3 ${card.label === 'Overdue Alerts' && stats.overdueCount > 0 ? 'text-natural-error' : 'text-natural-accent'}`} />
-              </div>
-            )}
+            <div className="absolute top-4 right-4 opacity-0 group-hover/card:opacity-100 transition-opacity">
+              <ChevronRight className={`w-3 h-3 ${card.label === 'Overdue Alerts' && stats.overdueCount > 0 ? 'text-natural-error' : 'text-natural-accent'}`} />
+            </div>
+            
             <div className="flex flex-col gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-natural-sidebar text-natural-accent border border-natural-border/50`}>
                 <card.icon className="w-5 h-5" />
@@ -100,7 +115,9 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
                 <p className="text-[10px] font-bold uppercase tracking-widest text-natural-muted">{card.label}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-2xl font-serif text-natural-accent">
-                    {card.label === 'Overdue Alerts' ? String(card.value).padStart(2, '0') : `₹${(card.value as number).toLocaleString('en-IN')}`}
+                    {card.label === 'Overdue Alerts' || card.label === 'Expected Payments' 
+                      ? String(card.value).padStart(2, '0') 
+                      : `₹${(card.value as number).toLocaleString('en-IN')}`}
                   </p>
                 </div>
               </div>
@@ -112,6 +129,97 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
           </motion.div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {showPaymentsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPaymentsModal(false)}
+              className="absolute inset-0 bg-natural-ink/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-natural-border"
+            >
+              <div className="p-6 border-b border-natural-border flex items-center justify-between bg-natural-sidebar/30">
+                <div>
+                  <h2 className="text-xl font-serif italic text-natural-ink">Upcoming Payments</h2>
+                  <p className="text-xs font-bold text-natural-muted uppercase tracking-widest mt-1">Expected this month</p>
+                </div>
+                <button 
+                  onClick={() => setShowPaymentsModal(false)}
+                  className="p-2 hover:bg-natural-border rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5 text-natural-muted" />
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto p-6">
+                {(stats.expectedPaymentsDetails?.length || 0) === 0 ? (
+                  <div className="text-center py-12">
+                    <Clock className="w-12 h-12 text-natural-muted/20 mx-auto mb-4" />
+                    <p className="text-natural-muted italic">No scheduled payments found for this period.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stats.expectedPaymentsDetails.map((payment, i) => (
+                      <div 
+                        key={`${payment.loanId}-${payment.cycleKey}-${i}`}
+                        className={`flex items-center justify-between p-4 border rounded-xl transition-all group ${payment.isPaid ? 'bg-natural-success/5 border-natural-success/20' : 'bg-natural-sidebar/20 border-natural-border hover:border-natural-accent/30'}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full border flex items-center justify-center shadow-sm ${payment.isPaid ? 'bg-natural-success/10 border-natural-success/20 text-natural-success' : 'bg-white border-natural-border text-natural-accent'}`}>
+                            {payment.isPaid ? <Check className="w-5 h-5" /> : <Calendar className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-serif italic text-natural-ink">{payment.loanName}</h4>
+                              {payment.isPaid && (
+                                <span className="px-1.5 py-0.5 bg-natural-success/10 text-natural-success text-[8px] font-bold uppercase tracking-widest rounded-full border border-natural-success/20">
+                                  Cleared
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] font-bold text-natural-muted uppercase tracking-widest mt-0.5">
+                              {payment.isPaid ? 'Collected' : 'Due'}: {new Date(payment.dueDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-mono font-bold ${payment.isPaid ? 'text-natural-success' : 'text-natural-accent'}`}>₹{Math.round(payment.amount).toLocaleString('en-IN')}</p>
+                          <button 
+                            onClick={() => {
+                              const loan = activeLoans.find(l => l.id === payment.loanId);
+                              if (loan) {
+                                setShowPaymentsModal(false);
+                                onLoanClick(loan);
+                              }
+                            }}
+                            className="text-[9px] font-bold text-natural-muted/60 uppercase tracking-tighter hover:text-natural-accent transition-colors flex items-center gap-1 justify-end mt-1"
+                          >
+                            View details <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 bg-natural-sidebar/30 border-t border-natural-border text-center">
+                <p className="text-[10px] font-bold text-natural-muted uppercase tracking-widest">
+                  Total Projected: <span className="text-natural-accent">₹{Math.round(stats.expectedPaymentsDetails?.reduce((sum, p) => sum + p.amount, 0) || 0).toLocaleString('en-IN')}</span>
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AIAnalyst 
         loans={activeLoans} 

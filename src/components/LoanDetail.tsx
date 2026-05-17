@@ -1,7 +1,8 @@
-import { ArrowLeft, Plus, History, Calculator, CheckCircle2, XCircle, Clock, Save, IndianRupee, Wallet, AlertCircle, Receipt, Edit2, Trash2, Check, X, ShieldAlert, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, History, Calculator, CheckCircle2, XCircle, Clock, Save, IndianRupee, Wallet, AlertCircle, Receipt, Edit2, Trash2, Check, X, ShieldAlert, Loader2, TrendingUp, Calendar } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Loan, Transaction, AppUser } from '../types';
 import { getCycleKey } from '../lib/loanUtils';
 import AssetIntelligence from './AssetIntelligence';
@@ -33,9 +34,10 @@ export default function LoanDetail({
   onUpdateName,
   onDeleteLoan
 }: LoanDetailProps) {
-  const [activeTab, setActiveTab] = useState<'ladder' | 'history'>('ladder');
+  const [activeTab, setActiveTab] = useState<'ladder' | 'history' | 'performance'>('ladder');
   const [repayAmount, setRepayAmount] = useState('');
   const [repayType, setRepayType] = useState<'interest' | 'principal'>('interest');
+  const [repayDate, setRepayDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [editingTxId, setEditingTxId] = useState<string | null>(null);
@@ -140,6 +142,41 @@ export default function LoanDetail({
       .reduce((sum, row) => sum + row.amount, 0);
   }, [ladder]);
 
+  const performanceData = useMemo(() => {
+    const months: { [key: string]: number } = {};
+    const now = new Date();
+    
+    // Last 12 months
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      months[key] = 0;
+    }
+
+    transactions
+      .filter(tx => tx.type === 'interest')
+      .forEach(tx => {
+        const d = new Date(tx.date);
+        const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (months[key] !== undefined) {
+          months[key] += tx.amount;
+        } else {
+          // If transaction is older than 12 months, we can either ignore or extend the chart.
+          // For now let's only show the last 12 months.
+        }
+      });
+
+    return Object.keys(months).sort().map(key => {
+      const [year, month] = key.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return {
+        month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        amount: months[key],
+        fullDate: date
+      };
+    });
+  }, [transactions]);
+
   const handleRateUpdate = async () => {
     const rate = parseFloat(tempRate);
     if (isNaN(rate) || rate < 0) return;
@@ -181,10 +218,11 @@ export default function LoanDetail({
         loanId: loan.id,
         type: repayType,
         amount: parseFloat(repayAmount),
-        date: new Date().toISOString(),
+        date: new Date(repayDate).toISOString(),
         cycleKey: repayType === 'interest' ? ladder.find(r => r.status !== 'paid')?.cycleKey : undefined
       });
       setRepayAmount('');
+      setRepayDate(new Date().toISOString().split('T')[0]);
       setIsConfirmingTransaction(false);
     } finally {
       setIsSubmitting(false);
@@ -380,19 +418,34 @@ export default function LoanDetail({
                 Ledger Entry
               </h3>
               <form onSubmit={handleTransaction} className="space-y-6">
-                  <div>
-                    <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Payment Amount (₹)</label>
-                    <div className="relative">
-                      <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-sidebar/40" />
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={repayAmount}
-                        onChange={(e) => setRepayAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-black/10 border border-white/10 rounded-lg py-4 pl-10 pr-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all font-mono"
-                        required
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Payment Amount (₹)</label>
+                      <div className="relative">
+                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-sidebar/40" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={repayAmount}
+                          onChange={(e) => setRepayAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full bg-black/10 border border-white/10 rounded-lg py-4 pl-10 pr-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-natural-sidebar/60 uppercase tracking-widest mb-1.5 pl-1">Transaction Date</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-sidebar/40" />
+                        <input
+                          type="date"
+                          value={repayDate}
+                          onChange={(e) => setRepayDate(e.target.value)}
+                          className="w-full bg-black/10 border border-white/10 rounded-lg py-4 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-white/20 transition-all uppercase text-[10px] font-bold"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -510,10 +563,10 @@ export default function LoanDetail({
           )}
 
           <div className={`bg-white border rounded-xl shadow-sm overflow-hidden flex flex-col h-full min-h-[600px] transition-all ${totalOverdueInterest > 0 ? 'border-natural-error/30 ring-4 ring-natural-error/[0.03]' : 'border-natural-border'}`}>
-            <div className="flex border-b border-natural-border bg-natural-sidebar/10">
+            <div className="flex border-b border-natural-border bg-natural-sidebar/10 overflow-x-auto no-scrollbar scroll-smooth">
               <button
                 onClick={() => setActiveTab('ladder')}
-                className={`px-10 py-5 text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'ladder' ? 'text-natural-accent' : 'text-natural-muted hover:text-natural-ink'}`}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-5 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === 'ladder' ? 'text-natural-accent' : 'text-natural-muted hover:text-natural-ink'}`}
               >
                 Interest Ladder
                 {activeTab === 'ladder' && (
@@ -522,18 +575,27 @@ export default function LoanDetail({
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-10 py-5 text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'history' ? 'text-natural-accent' : 'text-natural-muted hover:text-natural-ink'}`}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-5 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === 'history' ? 'text-natural-accent' : 'text-natural-muted hover:text-natural-ink'}`}
               >
                 Audit Ledger
                 {activeTab === 'history' && (
                   <motion.div layoutId="tab-detail" className="absolute bottom-0 left-0 right-0 h-0.5 bg-natural-accent" />
                 )}
               </button>
+              <button
+                onClick={() => setActiveTab('performance')}
+                className={`flex-1 md:flex-none px-6 md:px-10 py-5 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === 'performance' ? 'text-natural-accent' : 'text-natural-muted hover:text-natural-ink'}`}
+              >
+                Performance
+                {activeTab === 'performance' && (
+                  <motion.div layoutId="tab-detail" className="absolute bottom-0 left-0 right-0 h-0.5 bg-natural-accent" />
+                )}
+              </button>
             </div>
 
-            <div className="flex-1 overflow-auto p-0">
-              {activeTab === 'ladder' ? (
-                <div>
+            <div className="flex-1 overflow-auto p-0 min-h-[500px]">
+              {activeTab === 'ladder' && (
+                <div className="animate-in fade-in duration-300">
                    <table className="w-full text-left font-sans text-[13px]">
                     <thead>
                       <tr className="bg-natural-sidebar/30 text-natural-muted text-[11px] font-bold uppercase tracking-widest border-b border-natural-border">
@@ -586,8 +648,98 @@ export default function LoanDetail({
                      </p>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col h-full">
+              )}
+
+              {activeTab === 'performance' && (
+                <div className="p-8 flex flex-col animate-in fade-in duration-300">
+                  <div className="mb-8">
+                    <h3 className="text-xl font-serif italic text-natural-ink">Revenue Trajectory</h3>
+                    <p className="text-[10px] font-bold text-natural-muted uppercase tracking-widest mt-1">Monthly Interest Realization</p>
+                  </div>
+                  
+                  <div className="w-full bg-natural-sidebar/5 rounded-2xl p-6 border border-natural-border/50 h-[400px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6E1D6" opacity={0.5} />
+                        <XAxis 
+                          dataKey="month" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#8D8D70', fontSize: 10, fontWeight: 700 }}
+                          dy={10}
+                        />
+                        <YAxis 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#8D8D70', fontSize: 10, fontWeight: 700 }}
+                          tickFormatter={(val) => `₹${val}`}
+                          domain={[0, (dataMax: number) => Math.max(dataMax * 1.2, 1000)]}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#F5F2ED', 
+                            border: '1px solid #E6E1D6', 
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                            fontSize: '11px',
+                            fontFamily: 'Inter',
+                            padding: '12px'
+                          }}
+                          itemStyle={{ color: '#5A5A40', fontWeight: 600 }}
+                          formatter={(value: any) => [`₹${Number(value || 0).toLocaleString('en-IN')}`, 'Interest Received']}
+                          labelStyle={{ fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8D8D70' }}
+                          cursor={{ stroke: '#5A5A40', strokeWidth: 1, strokeDasharray: '4 4' }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="amount" 
+                          stroke="#5A5A40" 
+                          strokeWidth={4} 
+                          dot={{ r: 5, fill: '#5A5A40', strokeWidth: 3, stroke: '#FDFCFB' }}
+                          activeDot={{ r: 8, strokeWidth: 0, fill: '#5A5A40' }}
+                          animationDuration={1500}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="p-5 bg-white rounded-xl border border-natural-border shadow-sm"
+                    >
+                      <p className="text-[9px] font-bold text-natural-muted uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                        <TrendingUp className="w-3 h-3" />
+                        Average Monthly
+                      </p>
+                      <p className="text-2xl font-serif italic text-natural-accent">₹{Math.round(performanceData.reduce((sum, d) => sum + d.amount, 0) / (performanceData.length || 1)).toLocaleString('en-IN')}</p>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="p-5 bg-white rounded-xl border border-natural-border shadow-sm"
+                    >
+                      <p className="text-[9px] font-bold text-natural-muted uppercase tracking-widest mb-1.5">Peak Performance</p>
+                      <p className="text-2xl font-serif italic text-natural-accent">₹{Math.max(...performanceData.map(d => d.amount)).toLocaleString('en-IN')}</p>
+                    </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="p-5 bg-white rounded-xl border border-natural-border shadow-sm"
+                    >
+                      <p className="text-[9px] font-bold text-natural-muted uppercase tracking-widest mb-1.5">Total Annual Yield</p>
+                      <p className="text-2xl font-serif italic text-natural-accent">₹{performanceData.reduce((sum, d) => sum + d.amount, 0).toLocaleString('en-IN')}</p>
+                    </motion.div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'history' && (
+                <div className="flex flex-col h-full animate-in fade-in duration-300">
                   {/* Filters Header */}
                   <div className="flex flex-col md:flex-row items-center gap-4 px-8 py-6 bg-natural-sidebar/10 border-b border-natural-border">
                     <div className="flex bg-white border border-natural-border rounded-lg p-1 shadow-sm w-full md:w-auto">

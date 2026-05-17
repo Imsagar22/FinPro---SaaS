@@ -30,6 +30,42 @@ export interface OverdueInfo {
   missedInstallments: { cycleKey: string; amount: number; dueDate: string }[];
 }
 
+export function getExpectedPaymentsForMonth(loan: Loan, year: number, month: number): { cycleKey: string; dueDate: Date }[] {
+  const installments: { cycleKey: string; dueDate: Date }[] = [];
+  if (loan.status !== 'active') return installments;
+
+  const startDate = new Date(loan.startDate);
+  const frequency = loan.paymentFrequency || 'monthly';
+  
+  const startOfMonth = new Date(year, month, 1);
+  const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+
+  // We need to find all installments whose due date falls between startOfMonth and endOfMonth
+  // Installments usually start 1 cycle after startDate (e.g. if started Jan 1st, first payment Feb 1st)
+  
+  let i = 1;
+  while (true) {
+    let dueDate: Date;
+    if (frequency === 'monthly') {
+      dueDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, startDate.getDate());
+    } else {
+      dueDate = new Date(startDate.getTime() + (i * 7 * 24 * 60 * 60 * 1000));
+    }
+
+    if (dueDate > endOfMonth) break;
+
+    if (dueDate >= startOfMonth) {
+      installments.push({
+        cycleKey: getCycleKey(dueDate, frequency),
+        dueDate
+      });
+    }
+    i++;
+  }
+
+  return installments;
+}
+
 export function calculateLoanOverdueInfo(loan: Loan, transactions: Transaction[]): OverdueInfo {
   const info: OverdueInfo = {
     isOverdue: false,

@@ -33,4 +33,6 @@ export interface DashboardStats {
   totalInterestEarned: number;
   overdueCount: number;
   totalPendingInterest: number;
+  expectedPaymentsThisMonth: number;
+  expectedPaymentsDetails: { loanId: string; loanName: string; dueDate: string; amount: number; cycleKey: string; isPaid: boolean }[];
 }
