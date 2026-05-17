@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loan, Transaction, DashboardStats, AppUser } from '../types';
 import NewLoanModal from './NewLoanModal';
-import AIAnalyst from './AIAnalyst';
 
 interface DashboardProps {
   stats: DashboardStats;
@@ -220,12 +219,6 @@ export default function Dashboard({ stats, activeLoans, transactions, appUser, o
           </div>
         )}
       </AnimatePresence>
-
-      <AIAnalyst 
-        loans={activeLoans} 
-        transactions={transactions} 
-        stats={stats} 
-      />
 
       <div className="content-box bg-white border border-natural-border rounded-xl flex flex-col overflow-hidden shadow-sm">
         <div className="box-header px-6 py-4 border-b border-natural-border bg-natural-sidebar/30 flex justify-between items-center">
