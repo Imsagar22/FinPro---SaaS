@@ -6,6 +6,7 @@
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Customer name" },
+        "reason": { "type": "string", "description": "Reason or purpose for the loan" },
         "initialPrincipal": { "type": "number", "description": "Original loan amount" },
         "currentPrincipal": { "type": "number", "description": "Remaining debt" },
         "interestRate": { "type": "number", "description": "Monthly interest percentage" },

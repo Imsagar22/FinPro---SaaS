@@ -9,6 +9,7 @@ export interface AppUser {
 export interface Loan {
   id: string;
   name: string;
+  reason?: string;
   initialPrincipal: number;
   currentPrincipal: number;
   interestRate: number;

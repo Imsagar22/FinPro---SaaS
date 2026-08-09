@@ -399,6 +399,22 @@ export default function App() {
     }
   };
 
+  const updateLoanReason = async (loanId: string, newReason: string) => {
+    if (!user) return;
+    const path = `loans/${loanId}`;
+    try {
+      const loanRef = doc(db, 'loans', loanId);
+      await updateDoc(loanRef, { reason: newReason });
+      
+      // Update local state if selected
+      if (selectedLoan?.id === loanId) {
+        setSelectedLoan(prev => prev ? ({ ...prev, reason: newReason }) : null);
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, path);
+    }
+  };
+
   const deleteLoan = async (loanId: string) => {
     if (!user) return;
     const path = `loans/${loanId}`;
@@ -529,6 +545,7 @@ export default function App() {
               onToggleStatus={toggleLoanStatus}
               onUpdateInterestRate={updateInterestRate}
               onUpdateName={updateLoanName}
+              onUpdateReason={updateLoanReason}
               onDeleteLoan={deleteLoan}
             />
           ) : (

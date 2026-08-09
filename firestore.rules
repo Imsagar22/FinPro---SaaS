@@ -70,6 +70,7 @@ service cloud.firestore {
     // ===============================================================
     function isValidLoan(data) {
       return data.name is string && data.name.size() > 0 &&
+             (!('reason' in data) || data.reason is string) &&
              data.initialPrincipal is number && data.initialPrincipal > 0 &&
              data.currentPrincipal is number &&
              data.interestRate is number &&

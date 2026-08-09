@@ -18,6 +18,7 @@ interface LoanDetailProps {
   onToggleStatus: (loanId: string, currentStatus: 'active' | 'closed') => Promise<void>;
   onUpdateInterestRate: (loanId: string, newRate: number) => Promise<void>;
   onUpdateName: (loanId: string, newName: string) => Promise<void>;
+  onUpdateReason?: (loanId: string, newReason: string) => Promise<void>;
   onDeleteLoan: (loanId: string) => Promise<void>;
 }
 
@@ -32,6 +33,7 @@ export default function LoanDetail({
   onToggleStatus,
   onUpdateInterestRate,
   onUpdateName,
+  onUpdateReason,
   onDeleteLoan
 }: LoanDetailProps) {
   const [activeTab, setActiveTab] = useState<'ladder' | 'history' | 'performance'>('ladder');
@@ -53,6 +55,11 @@ export default function LoanDetail({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(loan.name);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
+
+  // Reason Edit State
+  const [isEditingReason, setIsEditingReason] = useState(false);
+  const [tempReason, setTempReason] = useState(loan.reason || '');
+  const [isUpdatingReason, setIsUpdatingReason] = useState(false);
 
   // Transaction Confirmation State
   const [isConfirmingTransaction, setIsConfirmingTransaction] = useState(false);
@@ -201,6 +208,17 @@ export default function LoanDetail({
     }
   };
 
+  const handleReasonUpdate = async () => {
+    if (!onUpdateReason) return;
+    setIsUpdatingReason(true);
+    try {
+      await onUpdateReason(loan.id, tempReason.trim());
+      setIsEditingReason(false);
+    } finally {
+      setIsUpdatingReason(false);
+    }
+  };
+
   const handleTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     if (!repayAmount || isSubmitting) return;
@@ -309,6 +327,56 @@ export default function LoanDetail({
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                 </>
+              )}
+            </div>
+
+            {/* Loan Reason/Purpose */}
+            <div className="mt-1 flex items-center justify-between gap-2 group">
+              {isEditingReason ? (
+                <div className="flex items-center gap-2 w-full animate-in fade-in duration-200">
+                  <input
+                    type="text"
+                    value={tempReason}
+                    onChange={(e) => setTempReason(e.target.value)}
+                    placeholder="Reason / Purpose for loan..."
+                    className="flex-1 bg-natural-sidebar border border-natural-border rounded px-2 py-1 text-xs text-natural-ink focus:outline-none focus:ring-1 focus:ring-natural-accent"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleReasonUpdate();
+                      if (e.key === 'Escape') { setIsEditingReason(false); setTempReason(loan.reason || ''); }
+                    }}
+                  />
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={handleReasonUpdate}
+                      disabled={isUpdatingReason}
+                      className="text-natural-success hover:bg-natural-success/10 p-1 rounded transition-colors disabled:opacity-50"
+                      title="Save reason"
+                    >
+                      {isUpdatingReason ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    </button>
+                    <button 
+                      onClick={() => { setIsEditingReason(false); setTempReason(loan.reason || ''); }}
+                      className="text-natural-error hover:bg-natural-error/10 p-1 rounded transition-colors"
+                      title="Cancel"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between w-full">
+                  <p className="text-xs text-natural-muted italic">
+                    {loan.reason ? `Purpose: ${loan.reason}` : <span className="opacity-60 text-[11px]">+ Add loan reason / purpose</span>}
+                  </p>
+                  <button 
+                    onClick={() => { setTempReason(loan.reason || ''); setIsEditingReason(true); }}
+                    className="p-1 text-natural-muted hover:text-natural-accent transition-colors opacity-0 group-hover:opacity-100"
+                    title="Edit reason"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                  </button>
+                </div>
               )}
             </div>
             <p className="text-xs font-bold text-natural-muted uppercase tracking-widest mt-2">Current Debt Position</p>

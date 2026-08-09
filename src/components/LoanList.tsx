@@ -21,7 +21,8 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
   const [customEndDate, setCustomEndDate] = useState('');
   
   const filteredLoans = loans.filter(l => {
-    const matchesSearch = l.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = l.name.toLowerCase().includes(term) || (l.reason && l.reason.toLowerCase().includes(term));
     const matchesStatus = statusFilter === 'all' || l.status === statusFilter;
     
     let matchesDate = true;
@@ -165,6 +166,11 @@ export default function LoanList({ loans, transactions, appUser, onAddLoan, onLo
                   <AlertCircle className="w-4 h-4 text-natural-error animate-pulse" />
                 )}
               </h3>
+              {loan.reason && (
+                <p className="text-xs text-natural-accent/90 italic font-medium mt-1 truncate">
+                  Purpose: {loan.reason}
+                </p>
+              )}
               <p className="text-[10px] text-natural-muted font-bold uppercase tracking-widest mt-1">Issued {new Date(loan.startDate).toLocaleDateString()}</p>
 
               <div className="mt-8 space-y-4">

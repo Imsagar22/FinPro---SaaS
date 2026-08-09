@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, User, IndianRupee, Percent, Calendar, X } from 'lucide-react';
+import { Plus, User, IndianRupee, Percent, Calendar, FileText, X } from 'lucide-react';
 import type { Loan } from '../types';
 
 interface NewLoanModalProps {
@@ -10,6 +10,7 @@ interface NewLoanModalProps {
 
 export default function NewLoanModal({ isOpen, onClose, onAddLoan }: NewLoanModalProps) {
   const [name, setName] = useState('');
+  const [reason, setReason] = useState('');
   const [principal, setPrincipal] = useState('');
   const [rate, setRate] = useState('');
   const [frequency, setFrequency] = useState<'weekly' | 'monthly'>('monthly');
@@ -25,6 +26,7 @@ export default function NewLoanModal({ isOpen, onClose, onAddLoan }: NewLoanModa
     try {
       await onAddLoan({
         name,
+        reason: reason.trim() || undefined,
         initialPrincipal: parseFloat(principal),
         interestRate: parseFloat(rate),
         paymentFrequency: frequency,
@@ -33,6 +35,7 @@ export default function NewLoanModal({ isOpen, onClose, onAddLoan }: NewLoanModa
       onClose();
       // Reset form
       setName('');
+      setReason('');
       setPrincipal('');
       setRate('');
       setFrequency('monthly');
@@ -74,6 +77,20 @@ export default function NewLoanModal({ isOpen, onClose, onAddLoan }: NewLoanModa
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-natural-sidebar/30 border border-natural-border rounded-lg py-4 pl-12 pr-4 focus:ring-2 focus:ring-natural-accent/10 focus:border-natural-accent outline-none transition-all text-sm"
                 placeholder="Full Entity Name"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-natural-muted uppercase tracking-widest pl-1">Reason / Purpose for Loan</label>
+            <div className="relative">
+              <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-natural-muted opacity-50" />
+              <input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full bg-natural-sidebar/30 border border-natural-border rounded-lg py-4 pl-12 pr-4 focus:ring-2 focus:ring-natural-accent/10 focus:border-natural-accent outline-none transition-all text-sm"
+                placeholder="e.g. Business Expansion, Medical, Working Capital"
               />
             </div>
           </div>
